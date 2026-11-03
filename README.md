@@ -1,56 +1,47 @@
-# Welcome to your Expo app 👋
+# TicketTrack
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+App híbrida de gastos personales. Integrantes: Laura Arnés y Hernán Parma. Materia: Aplicaciones Móviles, UNAJ.
 
-## Get started
+Cada usuario ve solo sus gastos. Se anotan con monto, categoría, nota, fecha, foto y lugar, y se consultan en la lista, el mapa, el resumen y el chat.
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Cómo correrla
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+Cámara, micrófono, ubicación precisa, mapa y el recordatorio usan módulos nativos. En Expo Go pueden faltar el dictado y las notificaciones locales. Para eso hace falta un development build:
 
-### Other setup steps
+```bash
+npx expo run:android
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+El paquete Android es `com.example.tickettrack`.
 
-## Learn more
+## Claves
 
-To learn more about developing your project with Expo, look at the following resources:
+No van a git. Copiá `.env.example` a `.env` y completá los mismos valores que el proyecto Android:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- Firebase (`EXPO_PUBLIC_FIREBASE_*`)
+- `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` y el client ID de Android
+- `EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME`, `EXPO_PUBLIC_CLOUDINARY_API_KEY`, `EXPO_PUBLIC_CLOUDINARY_API_SECRET`
+- `EXPO_PUBLIC_GEMINI_API_KEY`
 
-## Join the community
+El mapa no usa `MAPS_API_KEY`. Son teselas de Esri.
 
-Join our community of developers creating universal apps.
+Para Google Sign-In en un build propio, el SHA-1 de ese keystore tiene que estar cargado en Firebase. El ingreso con email y contraseña no depende de eso.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Firestore
+
+Las reglas están en `firestore.rules`. El archivo no las activa: hay que publicarlas en la consola de Firebase. Solo el dueño lee, edita o borra su gasto, y al crear el `userId` tiene que ser el uid de la sesión.
+
+## Notas de la entrega
+
+La foto se firma y se sube a Cloudinary desde la app, igual que en Android. En una app publicada esa firma debería hacerla un backend.
+
+La IA completa el formulario. No guarda el gasto sola.
+
+El recordatorio diario no revisa si ese día ya hay gastos. El aviso dice «¿Cargaste tus gastos de hoy?» y abre la app.
+
+Login, alta, detalle, resumen y chat quedan en español. La barra, los filtros, las categorías de la lista, el mapa y el perfil también están en inglés y portugués.
