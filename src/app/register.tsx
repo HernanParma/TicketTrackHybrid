@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { Platform, Pressable, Text } from 'react-native';
 import { Link } from 'expo-router';
+import { useState } from 'react';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { GoogleButton } from '@/components/GoogleButton';
 import { AuthPanel, Button, ErrorText, Field, Muted, Title } from '@/components/ui';
 import { useApp } from '@/context/AppProvider';
 
 export default function RegisterScreen() {
-  const { colors, signUp } = useApp();
+  const { colors, signUp, t } = useApp();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [repeat, setRepeat] = useState('');
@@ -22,7 +22,7 @@ export default function RegisterScreen() {
     try {
       await signUp(email, password, repeat);
     } catch (causa) {
-      setError(causa instanceof Error ? causa.message : 'No se pudo completar el ingreso. Probá de nuevo.');
+      setError(causa instanceof Error ? causa.message : t.errorDefaultAuth);
     } finally {
       setOcupado(false);
     }
@@ -30,26 +30,75 @@ export default function RegisterScreen() {
 
   return (
     <AuthPanel>
-      <Title>Crear cuenta</Title>
-      <Field compact={compacto} value={email} onChangeText={setEmail} placeholder="Email" keyboardType="email-address" />
-      <Field compact={compacto} value={password} onChangeText={setPassword} placeholder="Contraseña" secure />
-      <Field compact={compacto} value={repeat} onChangeText={setRepeat} placeholder="Repetir contraseña" secure />
-      <Muted>Mínimo 6 caracteres</Muted>
+      <View style={styles.headerContainer}>
+        <Text style={styles.logoText}>
+          <Text style={{ color: colors.primary }}>Ticket</Text>
+          <Text style={{ color: colors.text }}>Track</Text>
+        </Text>
+        <Text style={[styles.slogan, { color: colors.muted }]}>
+          {t.slogan}
+        </Text>
+      </View>
+
+      <View style={styles.titleContainer}>
+        <Title>{t.createAccountTitle}</Title>
+      </View>
+
+      <Field compact={compacto} value={email} onChangeText={setEmail} placeholder={t.emailPlaceholder} keyboardType="email-address" />
+      <Field compact={compacto} value={password} onChangeText={setPassword} placeholder={t.passwordPlaceholder} secure />
+      <Field compact={compacto} value={repeat} onChangeText={setRepeat} placeholder={t.repeatPasswordPlaceholder} secure />
+      
+      <Muted style={styles.hintText}>{t.passwordMin}</Muted>
       <ErrorText>{error}</ErrorText>
+      
       <Button
         compact={compacto}
-        label={ocupado ? 'Creando...' : 'Crear cuenta'}
+        label={ocupado ? t.btnCreating : t.createAccountTitle}
         disabled={ocupado}
         onPress={() => void crear()}
       />
       <GoogleButton compact={compacto} onError={setError} />
+      
       <Link href="/login" asChild>
-        <Pressable>
-          <Text style={{ color: colors.primary, fontWeight: '700', textAlign: 'center' }}>
-            Ya tengo cuenta, ingresar
+        <Pressable style={styles.linkButton}>
+          <Text style={[styles.linkText, { color: colors.primary }]}>
+            {t.linkHaveAccount}
           </Text>
         </Pressable>
       </Link>
     </AuthPanel>
   );
 }
+
+const styles = StyleSheet.create({
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+    gap: 4,
+  },
+  logoText: {
+    fontSize: 34,
+    fontWeight: 'bold',
+  },
+  slogan: {
+    fontStyle: 'italic',
+    fontSize: 14,
+  },
+  titleContainer: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  hintText: {
+    marginTop: -8,
+    marginLeft: 4,
+  },
+  linkButton: {
+    marginTop: 8,
+    padding: 8,
+  },
+  linkText: {
+    fontWeight: '700',
+    textAlign: 'center',
+    fontSize: 15,
+  },
+});

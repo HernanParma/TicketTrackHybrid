@@ -1,8 +1,8 @@
-import { CATEGORIA_ES, esCategoria, type Categoria, type Gasto } from '@/model/expense';
+import { exigirGemini } from '@/config/env';
 import { fechaNumerica } from '@/model/dates';
+import { CATEGORIA_ES, esCategoria, type Categoria, type Gasto } from '@/model/expense';
 import { formatoPesos } from '@/model/money';
 import { resumenDelMes } from '@/model/summary';
-import { exigirGemini } from '@/config/env';
 import { hayInternet } from '@/services/network';
 
 const MODELO = 'gemini-3.8-flash';
@@ -87,22 +87,35 @@ async function generar(
   const cuerpo = {
     systemInstruction: { parts: [{ text: instruccion }] },
     contents: contenidos ?? [{ role: 'user', parts: partes ?? [] }],
-    generationConfig: {
-      thinkingConfig: { thinkingLevel: 'LOW' },
-      ...(json ? { responseMimeType: 'application/json' } : {}),
-    },
+    generationConfig: json ? { responseMimeType: 'application/json' } : {},
   };
-  const respuesta = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODELO}:generateContent?key=${clave}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      body: JSON.stringify(cuerpo),
-    },
-  );
-  const texto = await respuesta.text();
-  if (!respuesta.ok) throw new Error(mensajeError(respuesta.status, texto));
-  return textoDeRespuesta(texto);
+
+  const controlador = new AbortController();
+  const idTiempo = setTimeout(() => controlador.abort(), 12000);
+
+  try {
+    const respuesta = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODELO}:generateContent?key=${clave}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify(cuerpo),
+        signal: controlador.signal,
+      }
+    );
+    
+    clearTimeout(idTiempo);
+    
+    const texto = await respuesta.text();
+    if (!respuesta.ok) throw new Error(mensajeError(respuesta.status, texto));
+    return textoDeRespuesta(texto);
+  } catch (error) {
+    clearTimeout(idTiempo);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('La conexión tardó demasiado. El servidor no responde.');
+    }
+    throw error;
+  }
 }
 
 function textoDeRespuesta(cuerpo: string): string {
@@ -147,10 +160,17 @@ function sugerenciaDesde(texto: string): SugerenciaGasto {
 }
 
 function mensajeError(codigo: number, cuerpo: string): string {
-  if (codigo === 400 || codigo === 403) return 'La clave de acceso no es válida. Revisá la configuración.';
+  if (codigo === 400 || codigo === 403) return 'La clave de acceso a Gemini no es válida. Revisá la configuración del .env';
+  if (codigo === 404) return 'El modelo de Gemini no fue encontrado (404).';
   if (codigo === 429) return 'El asistente está recibiendo muchas consultas. Probá de nuevo en un rato.';
   if (codigo === 503) return 'El servidor tiene alta demanda en este momento. Por favor, intentá de nuevo en unos minutos.';
-  if (codigo === 500) return 'Ocurrió un error en el servidor. Intentá más tarde.';
-  if (cuerpo.toLowerCase().includes('network')) return 'No hay conexión. Revisá internet.';
-  return 'Ocurrió un error inesperado. Por favor, intentá de nuevo.';
+  if (codigo === 500) return 'Ocurrió un error en el servidor de Gemini. Intentá más tarde.';
+  if (cuerpo.toLowerCase().includes('network')) return 'No hay conexión. Revisá tu internet.';
+
+  try {
+    const json = JSON.parse(cuerpo) as { error?: { message?: string } };
+    if (json.error?.message) return json.error.message;
+  } catch {}
+  
+  return `Error ${codigo}: Ocurrió un error inesperado.`;
 }

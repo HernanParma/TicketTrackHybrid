@@ -1,4 +1,5 @@
-import { ReactNode } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { ReactNode, useState } from 'react';
 import {
   Platform,
   Pressable,
@@ -27,37 +28,33 @@ export function Screen({
 }) {
   const { colors } = useApp();
   const insets = useSafeAreaInsets();
+
   const contenido = scroll ? (
     <ScrollView
-      contentContainerStyle={{
-        padding: 16,
-        paddingBottom: tabInset ? insets.bottom + 120 : 32,
-        gap: 12,
-      }}
+      contentContainerStyle={[
+        styles.screenScroll,
+        { paddingBottom: tabInset ? insets.bottom + 120 : 32 },
+      ]}
       keyboardShouldPersistTaps="handled">
       {children}
     </ScrollView>
   ) : (
-    <View style={{ flex: 1, paddingBottom: tabInset ? insets.bottom + 88 : 0 }}>{children}</View>
+    <View style={[styles.flex1, { paddingBottom: tabInset ? insets.bottom + 88 : 0 }]}>
+      {children}
+    </View>
   );
+
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>{contenido}</View>
+    <View style={[styles.flex1, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+      {contenido}
+    </View>
   );
 }
 
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   const { colors } = useApp();
   return (
-    <View
-      style={[
-        {
-          backgroundColor: colors.card,
-          borderRadius: 24,
-          padding: 16,
-          gap: 12,
-        },
-        style,
-      ]}>
+    <View style={[styles.card, { backgroundColor: colors.card }, style]}>
       {children}
     </View>
   );
@@ -66,7 +63,7 @@ export function Card({ children, style }: { children: ReactNode; style?: StylePr
 export function Title({ children, light = false }: { children: ReactNode; light?: boolean }) {
   const { colors } = useApp();
   return (
-    <Text style={{ color: light ? colors.onPrimary : colors.text, fontSize: 22, fontWeight: '700' }}>
+    <Text style={[styles.title, { color: light ? colors.onPrimary : colors.text }]}>
       {children}
     </Text>
   );
@@ -74,7 +71,7 @@ export function Title({ children, light = false }: { children: ReactNode; light?
 
 export function Muted({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
   const { colors } = useApp();
-  return <Text style={[{ color: colors.muted, fontSize: 14 }, style]}>{children}</Text>;
+  return <Text style={[styles.muted, { color: colors.muted }, style]}>{children}</Text>;
 }
 
 export function Field({
@@ -95,27 +92,42 @@ export function Field({
   compact?: boolean;
 }) {
   const { colors } = useApp();
+  const [isSecure, setIsSecure] = useState(secure);
+
   return (
-    <TextInput
-      value={value}
-      onChangeText={onChangeText}
-      placeholder={placeholder}
-      placeholderTextColor={colors.muted}
-      keyboardType={keyboardType}
-      autoCapitalize={keyboardType === 'email-address' ? 'none' : 'sentences'}
-      autoCorrect={keyboardType !== 'email-address'}
-      secureTextEntry={secure}
-      multiline={multiline}
-      style={{
-        backgroundColor: colors.input,
-        color: colors.text,
-        borderRadius: compact ? 12 : 16,
-        paddingHorizontal: compact ? 12 : 14,
-        paddingVertical: compact ? 8 : 12,
-        fontSize: compact ? 15 : 16,
-        minHeight: multiline ? 80 : compact ? 42 : undefined,
-      }}
-    />
+    <View style={styles.fieldContainer}>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={colors.muted}
+        keyboardType={keyboardType}
+        autoCapitalize={keyboardType === 'email-address' ? 'none' : 'sentences'}
+        autoCorrect={keyboardType !== 'email-address'}
+        secureTextEntry={isSecure}
+        multiline={multiline}
+        style={[
+          styles.textInput,
+          {
+            color: colors.text,
+            borderColor: colors.line,
+            borderRadius: compact ? 12 : 16,
+            paddingHorizontal: compact ? 16 : 18,
+            paddingVertical: compact ? 10 : 14,
+            paddingRight: secure ? 48 : 18,
+            fontSize: compact ? 15 : 16,
+            minHeight: multiline ? 80 : compact ? 48 : 54,
+          },
+        ]}
+      />
+      {secure && (
+        <Pressable
+          onPress={() => setIsSecure(!isSecure)}
+          style={styles.eyeIcon}>
+          <Ionicons name={isSecure ? 'eye-off' : 'eye'} size={22} color={colors.muted} />
+        </Pressable>
+      )}
+    </View>
   );
 }
 
@@ -135,6 +147,7 @@ export function Button({
   const { colors } = useApp();
   const fondo = tone === 'primary' ? colors.primary : tone === 'danger' ? colors.danger : colors.chip;
   const tinta = tone === 'ghost' ? colors.text : tone === 'primary' ? colors.onPrimary : '#FFFFFF';
+
   return (
     <Pressable
       onPress={onPress}
@@ -144,7 +157,9 @@ export function Button({
         compact ? styles.botonCompacto : null,
         { backgroundColor: fondo, opacity: disabled ? 0.5 : pressed ? 0.85 : 1 },
       ]}>
-      <Text style={{ color: tinta, fontWeight: '700', fontSize: compact ? 15 : 16 }}>{label}</Text>
+      <Text style={[styles.botonTexto, { color: tinta, fontSize: compact ? 15 : 16 }]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -155,29 +170,31 @@ export function AuthPanel({ children }: { children: ReactNode }) {
   const { width } = useWindowDimensions();
   const web = Platform.OS === 'web';
   const ancha = web && width >= 760;
+
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: ancha ? 0 : insets.top }}>
+    <View style={[styles.flex1, { backgroundColor: colors.background }]}>
       <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          justifyContent: ancha ? 'center' : 'flex-start',
-          alignItems: web ? 'center' : 'stretch',
-          paddingHorizontal: ancha ? 24 : 16,
-          paddingTop: ancha ? 32 : 16,
-          paddingBottom: insets.bottom + 32,
-        }}
+        contentContainerStyle={[
+          styles.authScroll,
+          {
+            paddingTop: insets.top + (ancha ? 32 : 48),
+            paddingBottom: insets.bottom + 32,
+            paddingHorizontal: ancha ? 24 : 24,
+          },
+        ]}
         keyboardShouldPersistTaps="handled">
         <View
-          style={{
-            width: '100%',
-            maxWidth: web ? 400 : undefined,
-            gap: web ? 10 : 12,
-            backgroundColor: ancha ? colors.card : 'transparent',
-            borderRadius: ancha ? 24 : 0,
-            borderWidth: ancha ? 1 : 0,
-            borderColor: colors.line,
-            padding: ancha ? 24 : 0,
-          }}>
+          style={[
+            styles.authContainer,
+            {
+              maxWidth: web ? 400 : '100%',
+              backgroundColor: ancha ? colors.card : 'transparent',
+              borderRadius: ancha ? 24 : 0,
+              borderWidth: ancha ? 1 : 0,
+              borderColor: colors.line,
+              padding: ancha ? 32 : 0,
+            },
+          ]}>
           {children}
         </View>
       </ScrollView>
@@ -188,19 +205,76 @@ export function AuthPanel({ children }: { children: ReactNode }) {
 export function ErrorText({ children }: { children: ReactNode }) {
   const { colors } = useApp();
   if (!children) return null;
-  return <Text style={{ color: colors.danger, fontSize: 14 }}>{children}</Text>;
+  return (
+    <View style={styles.errorContainer}>
+      <Ionicons name="warning" size={18} color={colors.danger} />
+      <Text style={[styles.errorText, { color: colors.danger }]}>{children}</Text>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
+  flex1: {
+    flex: 1,
+  },
+  screenScroll: {
+    padding: 16,
+    gap: 12,
+  },
+  card: {
+    borderRadius: 24,
+    padding: 16,
+    gap: 12,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  muted: {
+    fontSize: 14,
+  },
+  fieldContainer: {
+    justifyContent: 'center',
+  },
+  textInput: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 14,
+    padding: 6,
+  },
   boton: {
-    minHeight: 48,
-    borderRadius: 16,
+    minHeight: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
   },
   botonCompacto: {
-    minHeight: 42,
-    borderRadius: 12,
+    minHeight: 46,
+    borderRadius: 23,
+  },
+  botonTexto: {
+    fontWeight: '700',
+  },
+  authScroll: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  authContainer: {
+    width: '100%',
+    gap: 16,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  errorText: {
+    fontSize: 14,
   },
 });

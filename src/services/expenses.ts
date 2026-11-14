@@ -1,3 +1,4 @@
+import * as Crypto from 'expo-crypto';
 import {
   collection,
   deleteDoc,
@@ -8,7 +9,6 @@ import {
   Timestamp,
   where,
 } from 'firebase/firestore';
-import * as Crypto from 'expo-crypto';
 
 import { esCategoria, type Categoria, type Gasto } from '@/model/expense';
 import {
@@ -64,7 +64,7 @@ export async function crearGasto(userId: string, datos: DatosGasto): Promise<Gas
   let photoUrl: string | null = null;
   if (datos.photo && hayInternet()) {
     try {
-      photoUrl = await subirFoto(datos.photo.uri, userId, id);
+      photoUrl = await subirFoto(datos.photo.base64, userId, id);
     } catch {
       photoUrl = null;
     }
@@ -74,9 +74,7 @@ export async function crearGasto(userId: string, datos: DatosGasto): Promise<Gas
   try {
     await setDoc(doc(dbFirebase(), 'gastos', id), aFirestore(gasto));
     await confirmarSincronizado(userId, id);
-  } catch {
-    // Queda en el JSON del teléfono y se reintenta cuando Firestore responde.
-  }
+  } catch {}
   return lista;
 }
 
@@ -89,7 +87,7 @@ export async function actualizarGasto(
   let photoUrl = datos.existingPhotoUrl;
   if (datos.photo) {
     if (!hayInternet()) throw new Error('Sin internet no se puede subir la foto.');
-    photoUrl = await subirFoto(datos.photo.uri, userId, gastoId);
+    photoUrl = await subirFoto(datos.photo.base64, userId, gastoId);
   }
   const gasto = armar(gastoId, userId, datos, photoUrl);
   const lista = await encolarAlta(userId, gasto);
@@ -105,9 +103,7 @@ export async function actualizarGasto(
 export async function eliminarGasto(userId: string, gastoId: string): Promise<Gasto[]> {
   try {
     await borrarFoto(userId, gastoId);
-  } catch {
-    // Aunque falle la foto, el documento se borra.
-  }
+  } catch {}
   const lista = await encolarBaja(userId, gastoId);
   try {
     await deleteDoc(doc(dbFirebase(), 'gastos', gastoId));

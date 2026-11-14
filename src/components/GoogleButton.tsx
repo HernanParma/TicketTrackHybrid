@@ -1,8 +1,10 @@
-import { useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import * as AuthSession from 'expo-auth-session';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
+import { useEffect } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Button } from '@/components/ui';
 import { env } from '@/config/env';
 import { useApp } from '@/context/AppProvider';
 
@@ -15,12 +17,14 @@ export function GoogleButton({
   onError: (mensaje: string) => void;
   compact?: boolean;
 }) {
-  const { signInWithGoogleToken } = useApp();
+  const { colors, signInWithGoogleToken } = useApp();
+  
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     webClientId: env.googleWebClientId || undefined,
     androidClientId: env.googleAndroidClientId || undefined,
     iosClientId: env.googleWebClientId || undefined,
     selectAccount: true,
+    redirectUri: AuthSession.makeRedirectUri(), 
   });
 
   useEffect(() => {
@@ -42,11 +46,7 @@ export function GoogleButton({
   }, [response, onError, signInWithGoogleToken]);
 
   return (
-    <Button
-      label="Continuar con Google"
-      tone="ghost"
-      compact={compact}
-      disabled={!request}
+    <Pressable
       onPress={() => {
         if (!env.googleWebClientId) {
           onError('Falta activar Google en Firebase y pegar GOOGLE_WEB_CLIENT_ID.');
@@ -54,6 +54,45 @@ export function GoogleButton({
         }
         void promptAsync();
       }}
-    />
+      disabled={!request}
+      style={({ pressed }) => [
+        styles.botonGoogle,
+        compact ? styles.botonCompacto : null,
+        { 
+          borderColor: colors.line,
+          backgroundColor: pressed ? colors.line : 'transparent',
+          opacity: !request ? 0.5 : 1 
+        },
+      ]}>
+      <View style={styles.contenidoBoton}>
+        <Ionicons name="person-circle" size={20} color={colors.text} />
+        <Text style={[styles.textoGoogle, { color: colors.text, fontSize: compact ? 15 : 16 }]}>
+          Continuar con Google
+        </Text>
+      </View>
+    </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  botonGoogle: {
+    minHeight: 52,
+    borderRadius: 26,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  botonCompacto: {
+    minHeight: 46,
+    borderRadius: 23,
+  },
+  contenidoBoton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  textoGoogle: {
+    fontWeight: '700',
+  },
+});

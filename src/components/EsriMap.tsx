@@ -28,8 +28,10 @@ export function EsriMap({
   onMove,
 }: Props) {
   const web = useRef<{ injectJavaScript: (script: string) => void } | null>(null);
+  const [size, setSize] = useState({ width: 0, height: 0 });
   const [origen] = useState({ latitude, longitude });
   const serial = JSON.stringify(markers);
+
   const html = useMemo(() => {
     const puntos = JSON.parse(serial) as Marcador[];
     return htmlDelMapa(origen.latitude, origen.longitude, puntos, selectable, zoom);
@@ -56,17 +58,30 @@ export function EsriMap({
   };
 
   return (
-    <View style={styles.caja}>
-      <Vista
-        ref={web}
-        originWhitelist={['*']}
-        source={{ html, baseUrl: 'https://unpkg.com' }}
-        onMessage={alMensaje}
-        javaScriptEnabled
-        domStorageEnabled
-        scrollEnabled={false}
-        setSupportMultipleWindows={false}
-      />
+    <View
+      style={styles.caja}
+      onLayout={(e) => {
+        const { width, height } = e.nativeEvent.layout;
+        if (width > 0 && height > 0 && (width !== size.width || height !== size.height)) {
+          setSize({ width, height });
+        }
+      }}>
+      {size.width > 0 && size.height > 0 ? (
+        <Vista
+          ref={web}
+          style={{ width: size.width, height: size.height }}
+          originWhitelist={['*']}
+          source={{ html, baseUrl: 'https://unpkg.com' }}
+          onMessage={alMensaje}
+          onLoadEnd={() => {
+            web.current?.injectJavaScript("window.dispatchEvent(new Event('resize')); true;");
+          }}
+          javaScriptEnabled
+          domStorageEnabled
+          scrollEnabled={false}
+          setSupportMultipleWindows={false}
+        />
+      ) : null}
     </View>
   );
 }

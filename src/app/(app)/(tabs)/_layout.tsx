@@ -1,5 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useApp } from '@/context/AppProvider';
@@ -7,6 +8,12 @@ import { useApp } from '@/context/AppProvider';
 export default function TabsLayout() {
   const { colors, t } = useApp();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+
+  const isWeb = width >= 700;
+  const dockWidth = Math.min(width - 32, 580);
+  const horizontalInset = isWeb ? (width - dockWidth) / 2 : 16;
+
   return (
     <Tabs
       screenOptions={{
@@ -15,9 +22,9 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: {
           position: 'absolute',
-          left: 16,
-          right: 16,
-          bottom: Math.max(insets.bottom, 10),
+          left: horizontalInset,
+          right: horizontalInset,
+          bottom: Math.max(insets.bottom, isWeb ? 16 : 10),
           height: 68,
           borderRadius: 28,
           backgroundColor: colors.card,
@@ -36,8 +43,10 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: t.navExpenses,
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="receipt-long" color={typeof color === 'string' ? color : colors.primary} size={size} />
+          tabBarIcon: ({ focused, color, size }) => (
+            <View style={[styles.iconContainer, { backgroundColor: focused ? colors.chip : 'transparent' }]}>
+              <MaterialIcons name="receipt-long" color={typeof color === 'string' ? color : colors.primary} size={size} />
+            </View>
           ),
         }}
       />
@@ -45,8 +54,10 @@ export default function TabsLayout() {
         name="map"
         options={{
           title: t.navMap,
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="map" color={typeof color === 'string' ? color : colors.primary} size={size} />
+          tabBarIcon: ({ focused, color, size }) => (
+            <View style={[styles.iconContainer, { backgroundColor: focused ? colors.chip : 'transparent' }]}>
+              <MaterialIcons name="map" color={typeof color === 'string' ? color : colors.primary} size={size} />
+            </View>
           ),
         }}
       />
@@ -54,8 +65,10 @@ export default function TabsLayout() {
         name="summary"
         options={{
           title: t.navSummary,
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="pie-chart" color={typeof color === 'string' ? color : colors.primary} size={size} />
+          tabBarIcon: ({ focused, color, size }) => (
+            <View style={[styles.iconContainer, { backgroundColor: focused ? colors.chip : 'transparent' }]}>
+              <MaterialIcons name="pie-chart" color={typeof color === 'string' ? color : colors.primary} size={size} />
+            </View>
           ),
         }}
       />
@@ -63,8 +76,10 @@ export default function TabsLayout() {
         name="ai"
         options={{
           title: t.navAi,
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="auto-awesome" color={typeof color === 'string' ? color : colors.primary} size={size} />
+          tabBarIcon: ({ focused, color, size }) => (
+            <View style={[styles.iconContainer, { backgroundColor: focused ? colors.chip : 'transparent' }]}>
+              <MaterialIcons name="auto-awesome" color={typeof color === 'string' ? color : colors.primary} size={size} />
+            </View>
           ),
         }}
       />
@@ -72,11 +87,23 @@ export default function TabsLayout() {
         name="profile"
         options={{
           title: t.navProfile,
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="person" color={typeof color === 'string' ? color : colors.primary} size={size} />
+          tabBarIcon: ({ focused, color, size }) => (
+            <View style={[styles.iconContainer, { backgroundColor: focused ? colors.chip : 'transparent' }]}>
+              <MaterialIcons name="person" color={typeof color === 'string' ? color : colors.primary} size={size} />
+            </View>
           ),
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  iconContainer: {
+    width: 50,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

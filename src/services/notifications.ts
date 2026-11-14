@@ -1,5 +1,4 @@
 import * as Notifications from 'expo-notifications';
-import { AndroidImportance } from 'expo-notifications';
 import { Platform } from 'react-native';
 
 const CANAL = 'recordatorios';
@@ -17,20 +16,39 @@ Notifications.setNotificationHandler({
 
 async function prepararCanal() {
   if (Platform.OS !== 'android') return;
-  await Notifications.setNotificationChannelAsync(CANAL, {
-    name: 'Recordatorios',
-    importance: AndroidImportance.DEFAULT,
-    description: 'Aviso diario para cargar los gastos',
-  });
+  try {
+    await Notifications.setNotificationChannelAsync(CANAL, {
+      name: 'Recordatorios',
+      importance: Notifications.AndroidImportance.HIGH,
+    });
+  } catch (e) {
+    console.log('No se pudo crear el canal. Normal en Expo Go.');
+  }
 }
 
 export async function programarRecordatorio(hora: number, minuto: number, activo: boolean) {
   if (Platform.OS === 'web') return;
+  
   await Notifications.cancelScheduledNotificationAsync(AVISO).catch(() => undefined);
   if (!activo) return;
+  
   const permiso = await Notifications.getPermissionsAsync();
   if (!permiso.granted) return;
+  
   await prepararCanal();
+  
+  // Calculamos exactamente cuántos segundos faltan para la hora objetivo
+  const ahora = new Date();
+  const objetivo = new Date();
+  objetivo.setHours(hora, minuto, 0, 0);
+
+  // Si la hora de hoy ya pasó, programamos para mañana a esa misma hora
+  if (objetivo.getTime() <= ahora.getTime()) {
+    objetivo.setDate(objetivo.getDate() + 1);
+  }
+
+  const segundosHastaObjetivo = Math.floor((objetivo.getTime() - ahora.getTime()) / 1000);
+
   await Notifications.scheduleNotificationAsync({
     identifier: AVISO,
     content: {
@@ -39,33 +57,16 @@ export async function programarRecordatorio(hora: number, minuto: number, activo
       sound: true,
     },
     trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DAILY,
-      hour: hora,
-      minute: minuto,
+      seconds: segundosHastaObjetivo,
+      repeats: true,
       channelId: CANAL,
-    },
-  });
+    } as any,
+  }).catch((e) => console.log('Error programando:', e));
 }
 
 export async function cancelarRecordatorio() {
   if (Platform.OS === 'web') return;
   await Notifications.cancelScheduledNotificationAsync(AVISO).catch(() => undefined);
-}
-
-export async function probarRecordatorio(): Promise<string | null> {
-  if (Platform.OS === 'web') return 'web';
-  const permiso = await Notifications.requestPermissionsAsync();
-  if (!permiso.granted) return 'denied';
-  await prepararCanal();
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: 'TicketTrack',
-      body: TEXTO,
-      sound: true,
-    },
-    trigger: null,
-  });
-  return null;
 }
 
 export async function pedirPermisoNotificaciones(): Promise<boolean> {

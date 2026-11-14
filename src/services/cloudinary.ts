@@ -23,24 +23,19 @@ function mensaje(cuerpo: string): string {
     const json = JSON.parse(cuerpo) as { error?: { message?: string } };
     const detalle = json.error?.message;
     if (detalle) return `No se pudo subir la foto. ${detalle}`;
-  } catch {
-    // El cuerpo no era JSON.
-  }
+  } catch {}
   return 'No se pudo subir la foto a Cloudinary.';
 }
 
-export async function subirFoto(uri: string, uid: string, gastoId: string): Promise<string> {
+export async function subirFoto(base64: string, uid: string, gastoId: string): Promise<string> {
   exigirCloudinary();
   const id = publicId(uid, gastoId);
   const timestamp = Math.floor(Date.now() / 1000).toString();
   const parametros = { overwrite: 'true', public_id: id, timestamp };
   const firma = await firmar(parametros);
   const cuerpo = new FormData();
-  cuerpo.append('file', {
-    uri,
-    name: `${gastoId}.jpg`,
-    type: 'image/jpeg',
-  } as unknown as Blob);
+  
+  cuerpo.append('file', `data:image/jpeg;base64,${base64}`);
   cuerpo.append('api_key', env.cloudinary.apiKey);
   cuerpo.append('timestamp', timestamp);
   cuerpo.append('public_id', id);
