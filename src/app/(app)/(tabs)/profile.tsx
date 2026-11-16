@@ -273,9 +273,9 @@ export default function ProfileScreen() {
           value={new Date(2026, 0, 1, reminder.hora, reminder.minuto)}
           mode="time"
           is24Hour
-          onChange={(_event, elegida) => {
+          onChange={(event, elegida) => {
             setMostrarHora(false);
-            if (!elegida) return;
+            if (event.type === 'dismissed' || !elegida) return;
             setReminder({
               ...reminder,
               hora: elegida.getHours(),

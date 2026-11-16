@@ -57,12 +57,12 @@ export async function registrar(email: string, password: string, repetir: string
 }
 
 export async function ingresarConGoogle(idToken: string, accessToken?: string | null) {
-  if (!idToken) {
-    throw new Error('Google no devolvió un token. Revisá el ID de cliente web.');
+  if (!idToken && !accessToken) {
+    throw new Error('Google no devolvió credenciales válidas.');
   }
   recordarTokenGoogle(accessToken ?? null);
   try {
-    const credencial = GoogleAuthProvider.credential(idToken, accessToken ?? undefined);
+    const credencial = GoogleAuthProvider.credential(idToken || null, accessToken || null);
     await signInWithCredential(authFirebase(), credencial);
   } catch (causa) {
     throw new Error(mensajeAuth(causa));

@@ -41,6 +41,7 @@ export function ExpenseForm({ expenseId }: { expenseId?: string }) {
   const [pensando, setPensando] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [buscandoUbicacion, setBuscandoUbicacion] = useState(false);
+  const [errorAsistente, setErrorAsistente] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const geo = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -73,9 +74,9 @@ export function ExpenseForm({ expenseId }: { expenseId?: string }) {
   };
 
   const dictar = async () => {
-    setError(null);
+    setErrorAsistente(null);
     if (Platform.OS === 'web') {
-      setError(t.errDictationWeb);
+      setErrorAsistente(t.errDictationWeb);
       return;
     }
     try {
@@ -88,7 +89,7 @@ export function ExpenseForm({ expenseId }: { expenseId?: string }) {
       }
       const permiso = await modulo.requestPermissionsAsync();
       if (!permiso.granted) {
-        setError(t.errMicPermission);
+        setErrorAsistente(t.errMicPermission);
         return;
       }
       const suscripciones: { remove: () => void }[] = [];
@@ -101,7 +102,7 @@ export function ExpenseForm({ expenseId }: { expenseId?: string }) {
       suscripciones.push(
         modulo.addListener('error', (event) => {
           if (event.error !== 'aborted' && event.error !== 'no-speech') {
-            setError(t.errMicFailed);
+            setErrorAsistente(t.errMicFailed);
           }
           setEscuchando(false);
         }),
@@ -115,7 +116,7 @@ export function ExpenseForm({ expenseId }: { expenseId?: string }) {
       setEscuchando(true);
       modulo.start({ lang: t.speechLang, interimResults: true, continuous: false });
     } catch {
-      setError(t.errDictationExpoGo);
+      setErrorAsistente(t.errDictationExpoGo);
       setEscuchando(false);
     }
   };
@@ -124,11 +125,11 @@ export function ExpenseForm({ expenseId }: { expenseId?: string }) {
     const texto = frase.trim();
     if (!texto) return;
     setPensando(true);
-    setError(null);
+    setErrorAsistente(null);
     try {
       aplicar(await interpretarFrase(texto));
     } catch (causa) {
-      setError(causa instanceof Error ? causa.message : t.errInterpretExpense);
+      setErrorAsistente(causa instanceof Error ? causa.message : t.errInterpretExpense);
     } finally {
       setPensando(false);
     }
@@ -337,6 +338,7 @@ export function ExpenseForm({ expenseId }: { expenseId?: string }) {
                     </Pressable>
                   </View>
                 </Card>
+                {errorAsistente ? <ErrorText>{errorAsistente}</ErrorText> : null}
               </View>
 
               <View style={{ flex: 1, gap: 8 }}>
@@ -644,6 +646,7 @@ export function ExpenseForm({ expenseId }: { expenseId?: string }) {
               </Pressable>
             </View>
           </Card>
+          {errorAsistente ? <ErrorText>{errorAsistente}</ErrorText> : null}
         </View>
 
         <View style={{ gap: 8 }}>

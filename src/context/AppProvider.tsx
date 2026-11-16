@@ -1,13 +1,12 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Platform, useColorScheme } from 'react-native';
+import type { User } from '@firebase/auth';
 import * as Network from 'expo-network';
 import * as SplashScreen from 'expo-splash-screen';
 import * as SystemUI from 'expo-system-ui';
-import type { User } from '@firebase/auth';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Platform, useColorScheme } from 'react-native';
 
 import { textos, type Idioma, type ModoTema } from '@/i18n';
 import type { Gasto } from '@/model/expense';
-import { claro, noche, type Paleta } from '@/theme/colors';
 import { cerrarSesion, ingresar, ingresarConGoogle, observarSesion, registrar } from '@/services/auth';
 import {
   actualizarGasto,
@@ -21,7 +20,6 @@ import { marcarEnLinea } from '@/services/network';
 import {
   cancelarRecordatorio,
   pedirPermisoNotificaciones,
-  probarRecordatorio,
   programarRecordatorio,
 } from '@/services/notifications';
 import {
@@ -33,6 +31,7 @@ import {
   leerTema,
   type Recordatorio,
 } from '@/services/preferences';
+import { claro, noche, type Paleta } from '@/theme/colors';
 
 type AppContextValue = {
   ready: boolean;
@@ -49,7 +48,6 @@ type AppContextValue = {
   online: boolean;
   reminder: Recordatorio;
   setReminder: (recordatorio: Recordatorio) => Promise<string | null>;
-  testReminder: () => Promise<string | null>;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, repeat: string) => Promise<void>;
   signInWithGoogleToken: (idToken: string, accessToken?: string | null) => Promise<void>;
@@ -192,11 +190,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setReminderState(recordatorio);
         await guardarRecordatorio(recordatorio);
         return null;
-      },
-      testReminder: async () => {
-        const error = await probarRecordatorio();
-        if (error === 'web') return t.reminderWeb;
-        return error ? t.notificationsOff : null;
       },
       signIn: ingresar,
       signUp: registrar,

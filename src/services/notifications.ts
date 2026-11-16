@@ -28,26 +28,15 @@ async function prepararCanal() {
 
 export async function programarRecordatorio(hora: number, minuto: number, activo: boolean) {
   if (Platform.OS === 'web') return;
-  
+
   await Notifications.cancelScheduledNotificationAsync(AVISO).catch(() => undefined);
+  await Notifications.cancelAllScheduledNotificationsAsync().catch(() => undefined);
   if (!activo) return;
-  
+
   const permiso = await Notifications.getPermissionsAsync();
   if (!permiso.granted) return;
-  
+
   await prepararCanal();
-  
-  // Calculamos exactamente cuántos segundos faltan para la hora objetivo
-  const ahora = new Date();
-  const objetivo = new Date();
-  objetivo.setHours(hora, minuto, 0, 0);
-
-  // Si la hora de hoy ya pasó, programamos para mañana a esa misma hora
-  if (objetivo.getTime() <= ahora.getTime()) {
-    objetivo.setDate(objetivo.getDate() + 1);
-  }
-
-  const segundosHastaObjetivo = Math.floor((objetivo.getTime() - ahora.getTime()) / 1000);
 
   await Notifications.scheduleNotificationAsync({
     identifier: AVISO,
@@ -57,16 +46,18 @@ export async function programarRecordatorio(hora: number, minuto: number, activo
       sound: true,
     },
     trigger: {
-      seconds: segundosHastaObjetivo,
-      repeats: true,
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour: hora,
+      minute: minuto,
       channelId: CANAL,
-    } as any,
+    },
   }).catch((e) => console.log('Error programando:', e));
 }
 
 export async function cancelarRecordatorio() {
   if (Platform.OS === 'web') return;
   await Notifications.cancelScheduledNotificationAsync(AVISO).catch(() => undefined);
+  await Notifications.cancelAllScheduledNotificationsAsync().catch(() => undefined);
 }
 
 export async function pedirPermisoNotificaciones(): Promise<boolean> {
