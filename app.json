@@ -21,7 +21,7 @@
     "android": {
       "package": "com.example.tickettrackhybrid",
       "adaptiveIcon": {
-        "backgroundColor": "#E7ECE8",
+        "backgroundColor": "#0B1410",
         "foregroundImage": "./assets/images/icon.png"
       },
       "predictiveBackGestureEnabled": false,
@@ -49,7 +49,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#E7ECE8",
+          "backgroundColor": "#0B1410",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 180
         }
